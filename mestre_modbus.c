@@ -322,16 +322,17 @@ int main (int argc, char** argv)
   serial_handle = serialOpen (argv[1], 115200);
   if (serial_handle < 0)
   {
-	    printf("\n\rNão deu certo. Tentando abrir a porta serial /dev/tnt1\n\r");
+	    printf("Não deu certo. Tentando abrir a porta serial /dev/tnt1\n\r");
 	    serial_handle = serialOpen ("/dev/tnt1", 115200);
 	    if (serial_handle < 0)
 	    {
-			printf("\n\rIt was not possible to open the serial port!\n\r");
+			printf("Não foi possível abrir a porta serial /dev/tnt1!\n\r");
 			return -1;
+	    }else{
+		printf("Porta serial /dev/tnt1 aberta com sucesso!\n\r\n\r");
 	    }
   }else{
-	printf("Porta serial %s aberta com sucesso!\n\r", argv[1]);  
-	serial_handle = serialOpen (argv[1], 115200);
+	printf("Porta serial %s aberta com sucesso!\n\r\n\r", argv[1]);  
   }
 
   //uint16_t FiO2 = 2;
