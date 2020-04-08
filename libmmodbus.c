@@ -576,11 +576,12 @@ void modbusOpen(char *string)
 JNIEXPORT void JNICALL Java_MestreModbus_modbusOpen
   (JNIEnv *env, jobject jobj){
     modbusOpen("/dev/ttyACM0");
+}
 
-    uint16_t insp = 30;
-    uint16_t bpm = 10;
-  
-    escreve_insp(SWAP(insp));
-    escreve_bpm(SWAP(bpm));
+JNIEXPORT void JNICALL Java_MestreModbus_modbusUpdateFiO2
+  (JNIEnv *env, jobject jobj, jshort value){
+
+	escreve_FiO2(SWAP(value));
+
 }
 

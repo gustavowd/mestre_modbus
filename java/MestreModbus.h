@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_MestreModbus_modbusOpen
   (JNIEnv *, jobject);
 
+/*
+ * Class:     MestreModbus
+ * Method:    modbusUpdateFiO2
+ * Signature: (S)V
+ */
+JNIEXPORT void JNICALL Java_MestreModbus_modbusUpdateFiO2
+  (JNIEnv *, jobject, jshort);
+
 #ifdef __cplusplus
 }
 #endif
