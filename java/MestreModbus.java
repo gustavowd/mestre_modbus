@@ -9,7 +9,7 @@ public class MestreModbus {
     static public void main(String argv[]) {
             System.loadLibrary("mmodbus"); /* (2) */
             MestreModbus mestre = new MestreModbus();
-            int status = mestre.modbusOpen("/dev/ttyACM0");
+            int status = mestre.modbusOpen("/dev/tnt1");
             if (status == 0){
                 status = mestre.modbusUpdateFiO2((short) 25);
                 status = mestre.modbusUpdateInsp((short) 15);
