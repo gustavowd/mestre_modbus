@@ -10,17 +10,41 @@ extern "C" {
 /*
  * Class:     MestreModbus
  * Method:    modbusOpen
- * Signature: ()V
+ * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_MestreModbus_modbusOpen
-  (JNIEnv *, jobject);
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusOpen
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     MestreModbus
  * Method:    modbusUpdateFiO2
- * Signature: (S)V
+ * Signature: (S)I
  */
-JNIEXPORT void JNICALL Java_MestreModbus_modbusUpdateFiO2
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateFiO2
+  (JNIEnv *, jobject, jshort);
+
+/*
+ * Class:     MestreModbus
+ * Method:    modbusUpdateInsp
+ * Signature: (S)I
+ */
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateInsp
+  (JNIEnv *, jobject, jshort);
+
+/*
+ * Class:     MestreModbus
+ * Method:    modbusUpdateBpm
+ * Signature: (S)I
+ */
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateBpm
+  (JNIEnv *, jobject, jshort);
+
+/*
+ * Class:     MestreModbus
+ * Method:    modbusUpdateMaxPaw
+ * Signature: (S)I
+ */
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateMaxPaw
   (JNIEnv *, jobject, jshort);
 
 #ifdef __cplusplus

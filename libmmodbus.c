@@ -555,15 +555,17 @@ uint8_t escreve_max_paw(uint16_t max_paw){
  *	Let the fun begin
  *********************************************************************************
  */
-void modbusOpen(char *string)
+int modbusOpen(char *string)
 { 
   printf("\n\rTentando abrir a porta serial %s\n\r", string);
   serial_handle = serialOpen (string, 115200);
   if (serial_handle < 0)
   {
-	    printf("Não deu certo. \n\r");
+	printf("Não deu certo. \n\r");
+	return -1;    
   }else{
 	printf("Porta serial %s aberta com sucesso!\n\r\n\r", string);  
+	return 0;
   }
 }
 
@@ -573,15 +575,35 @@ void modbusOpen(char *string)
  * Method:    modbusOpen
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_MestreModbus_modbusOpen
-  (JNIEnv *env, jobject jobj){
-    modbusOpen("/dev/ttyACM0");
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusOpen
+  (JNIEnv *env, jobject jobj, jstring str){
+    return modbusOpen("/dev/ttyACM0");
 }
 
-JNIEXPORT void JNICALL Java_MestreModbus_modbusUpdateFiO2
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateFiO2
   (JNIEnv *env, jobject jobj, jshort value){
 
-	escreve_FiO2(SWAP(value));
+	return (int)escreve_FiO2(SWAP(value));
 
 }
 
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateInsp
+  (JNIEnv *env, jobject jobj, jshort value){
+
+	return (int)escreve_insp(SWAP(value));
+
+}
+
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateBpm
+  (JNIEnv *env, jobject jobj, jshort value){
+
+	return (int)escreve_bpm(SWAP(value));
+
+}
+
+JNIEXPORT jint JNICALL Java_MestreModbus_modbusUpdateMaxPaw
+  (JNIEnv *env, jobject jobj, jshort value){
+
+	return (int)escreve_max_paw(SWAP(value));
+
+}
