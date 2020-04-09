@@ -24,7 +24,14 @@ int serial_handle = 0;
 #define MAX_PAW_ADDR    40005
 #define MIN_PEPP_ADDR   40006
 #define MAX_PEEP_ADDR   40007
+#define ON_OFF_ADDR   	40008
 
+#define CURRENT_PAW_ADDR	50000
+#define ALARM_PAW_ADDR		50001
+#define ALARM_PEPP_LOSS_ADDR   	50002
+#define ALARM_PEEP_HIGH_ADDR   	50003
+#define ALARM_PAIR_ADDR    	50004
+#define ALARM_PO2_ADDR        	50005
 
 static const uint8_t aucCRCHi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
@@ -91,6 +98,64 @@ uint16_t usMBCRC16( uint8_t * pucFrame, uint16_t usLen )
     return ( uint16_t )( ucCRCHi << 8 | ucCRCLo );
 }
 
+
+
+//Função para ler os input registers
+uint8_t read_input_reg(uint8_t endereco_slave, uint16_t init_address, uint16_t num_reg_read, uint16_t *regs){
+
+	uint8_t funcao=4; //função leitura de múltiplos registradores
+	uint8_t mensagem[8]; //vetor  mensagem
+	uint16_t  tamanho_resposta= 5+(2*num_reg_read);
+	//vetor resposta (c não suporta tamanho de vetor determinado por parâmetro)
+	uint8_t resposta[148]; // Suporta a leitura de um modelo com até 70 registradores
+	uint16_t crc_resp;//variavel auxiliar CRC parte alta
+	uint16_t CRC;
+	int i;
+	int j;
+
+	//monta vetor mensagem
+	init_address -= 1;
+	mensagem[0] = endereco_slave;
+	mensagem[1] = funcao;
+	mensagem[2] = (uint8_t)(init_address >> 8);
+	mensagem[3] = (uint8_t)init_address;
+	mensagem[4] = (uint8_t)(num_reg_read >> 8);
+	mensagem[5] = (uint8_t)num_reg_read;
+
+	CRC=usMBCRC16(mensagem,6);
+
+	mensagem[6] = (uint8_t)CRC;
+	mensagem[7] = (uint8_t)(CRC>>8);
+
+	resposta[0]=0;
+
+	// Transmite a pergunta
+	(void)serialPutBuffer(serial_handle, (char *)mensagem, 8) ;
+
+	/* Recebe a resposta */
+	serialGetchar(serial_handle, (char *)&resposta[0]);	// Slave addr
+	serialGetchar(serial_handle, (char *)&resposta[1]);	// Function code
+	if (resposta[1] != funcao){
+		return -1;
+	}
+
+	for(j=2;j<tamanho_resposta;j++){
+        serialGetchar(serial_handle, (char *)&resposta[j]);	// Dados
+	}
+
+	// Teste de CRC
+	CRC=usMBCRC16(resposta, (tamanho_resposta-2));
+	crc_resp=(resposta[(tamanho_resposta-1)]<<8) | (resposta[(tamanho_resposta-2)]);
+
+	if(CRC==crc_resp){
+		for ( i = 0; i < ((tamanho_resposta - 5)>>1); i++){
+			*regs++ =  (resposta[4+(i*2)] << 8) + resposta[3+(i*2)];
+		}
+		return 0;
+	}else{
+		return -1;
+	}
+}//fim da função de leitura dos input registers
 
 
 //Função para ler os holding registers
@@ -308,6 +373,33 @@ uint8_t escreve_max_paw(uint16_t max_paw){
     }
 }
 
+
+uint8_t escreve_on_off(uint16_t on_off){
+    // Escreve novo valor para o respirador  
+    printf("Atualizando valor de on_off para %u\n\r", (unsigned int)SWAP(on_off));  
+    write_holding_reg(10, ON_OFF_ADDR, 1, &on_off);
+
+    // Confere se o valor foi atualizado
+    uint16_t updated_on_off;
+    read_holding_reg(10, ON_OFF_ADDR, 1, &updated_on_off);
+
+    if (on_off == updated_on_off){
+        printf("Confirmada atualização de bpm para %u\n\r", (unsigned int)SWAP(updated_on_off));
+        return 0;
+    }else{
+        printf("Erro na atualização de bpm para %u\n\r", (unsigned int)SWAP(updated_on_off));
+        return -1;
+    }
+}
+
+void le_paw_alarms(void){
+    uint16_t read_data[6];
+    read_input_reg(10, CURRENT_PAW_ADDR, 6, read_data);
+
+    printf("Paw Atual em cm H2O %u\n\r", (unsigned int)SWAP(read_data[0]));
+    printf("Alarmes %u, %u, %u, %u, %u\n\r", (unsigned int)SWAP(read_data[1]), (unsigned int)SWAP(read_data[2]), (unsigned int)SWAP(read_data[3]), (unsigned int)SWAP(read_data[4]), (unsigned int)SWAP(read_data[5]));
+}
+
 /*
  *********************************************************************************
  * main:
@@ -340,28 +432,66 @@ int main (int argc, char** argv)
 
   uint16_t insp = 20;
   uint16_t bpm = 15;
+
+  int i = 0;
   
   while(1)
   {
+    printf("\n\r");
+    for (i=0; i<10; i++){
+	le_paw_alarms();
+    	sleep(1);
+    }
+    printf("\n\r");
+
+    printf("Liga respirador!\n\r"); 
+    escreve_on_off(SWAP(1));
+    printf("\n\r");	
+
     insp = 30;
     bpm = 10;
     escreve_insp(SWAP(insp));
     escreve_bpm(SWAP(bpm));
-    sleep(18);
+
+    printf("\n\r");
+    for (i=0; i<18; i++){
+	le_paw_alarms();
+    	sleep(1);
+    }
+    printf("\n\r");
+
     printf("\n\r");
 
     insp = 5;
     bpm = 30;
     escreve_insp(SWAP(insp));
     escreve_bpm(SWAP(bpm));
-    sleep(18);
+
+    printf("\n\r");
+    for (i=0; i<18; i++){
+	le_paw_alarms();
+    	sleep(1);
+    }
+    printf("\n\r");
+
     printf("\n\r");
 
     insp = 15;
     bpm = 20;
     escreve_insp(SWAP(insp));
     escreve_bpm(SWAP(bpm));
-    sleep(12);
+
+    printf("\n\r");
+    for (i=0; i<12; i++){
+	le_paw_alarms();
+    	sleep(1);
+    }
+    printf("\n\r");
+
+    printf("\n\r");
+
+    printf("Desliga respirador!\n\r");
+    escreve_on_off(SWAP(0));	
     printf("\n\r");
 #if 0      
     escreve_FiO2(SWAP(FiO2));
